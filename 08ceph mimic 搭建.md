@@ -23,6 +23,8 @@ CentOS Linux release 7.8.2003 (Core)
 $ yum -y upgrade
 # 系统和软件配置文件更新（升级所有包,系统版本和内核，改变软件设置和系统设置）
 $ yum -y update
+# 重启系统
+$ reboot
 ```
 
 3. 关闭防火墙和禁用selinux
