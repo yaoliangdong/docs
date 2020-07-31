@@ -1,20 +1,43 @@
 # ceph mimic`13.2.10` 版本搭建
+## 系统环境 `CentOS 7`
 
 **基础环境配置：**
 
-1. 关闭防火墙和禁用selinux
+1. 查看系统版本（Linux查看操作系统版本的几种方式）
+```
+$ uname -a
+$ lsb_release -a
+$ cat /etc/issue
+$ cat /proc/version
+$ cat /etc/redhat-release
+```
+```
+$ cat /etc/centos-release
+```
+```
+CentOS Linux release 7.8.2003 (Core)
+```
+2. 更新系统（选中第一个更新即可）
+```
+# 系统和软件配置不做修改（升级所有包和系统版本，不改变内核,软件和系统设置）
+$ yum -y upgrade
+# 系统和软件配置文件更新（升级所有包,系统版本和内核，改变软件设置和系统设置）
+$ yum -y update
+```
+
+3. 关闭防火墙和禁用selinux
 ```
 $ systemctl stop firewalld
 $ systemctl disable firewalld
 $ sed -i 's/enforcing/disabled/' /etc/selinux/config
 $ setenforce 0
 ```
-2. 配置服务器的NTP时间同步
+4. 配置服务器的NTP时间同步
 ```
 $ yum install ntp ntpdate -y
 $ timedatectl set-ntp yes
 ```
-3. 配置所有节点/etc/hosts
+5. 配置所有节点/etc/hosts
 ```
 $ vim /et/hosts
 ```
@@ -26,7 +49,7 @@ $ vim /et/hosts
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 ```
-4. 配置部署节点到所有节点的无秘钥访问
+6. 配置部署节点到所有节点的无秘钥访问
 ```
 $ ssh-keygen 一直enter键即可
 $ ssh-copy-id root@admin
@@ -296,3 +319,20 @@ $ s3cmd du -H s3://{目录}
 # 查看更多关于bucket和文件的信息
 $ s3cmd info s3://BUCKET[/OBJECT]
 ```
+
+4. 磁盘挂载
+```
+# 扫描磁盘使挂载盘出现在列表
+$ echo "- - -" > /sys/class/scsi_host/host0/scan
+# 查看磁盘分区列表
+$ fdisk -l
+# 列出所有可用块设备的信息
+$ lsblk
+```
+
+
+
+
+
+
+
