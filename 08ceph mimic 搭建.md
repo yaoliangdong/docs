@@ -319,7 +319,11 @@ $ systemctl enable ceph-mon@node1.service
 sudo systemctl [start/stop/restart/status] ceph-osd@0.service
 # 设置ceph-osd随Linux 系统自动启动
 $ systemctl enable ceph-osd@0.service
-
+```
+```
+# 在任何时候遇到麻烦并且想要重新开始，请执行以下操作清除配置。如果执行purge，则必须重新安装Ceph
+$ ceph-deploy purge <gateway-node1> [<gateway-node2>]
+$ ceph-deploy purgedata <gateway-node1> [<gateway-node2>]
 ```
 
 结束
@@ -408,6 +412,11 @@ $ echo "- - -" > /sys/class/scsi_host/host0/scan
 $ fdisk -l
 # 列出所有可用块设备的信息
 $ lsblk
+```
+5. 创建大文件命令
+```
+# 创建文件名为test1大小为1000M的文件
+$ dd if=/dev/zero of=test1 bs=1M count=1000
 ```
 
 
