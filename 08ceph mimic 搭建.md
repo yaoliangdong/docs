@@ -154,11 +154,50 @@ $ cd /etc/ceph
 $ ceph-deploy disk zap node1 /dev/sdb
 $ ceph-deploy osd create --data /dev/sdb node1 
 ```
+**部署ceph的rgw网关服务**
+https://docs.ceph.com/docs/mimic/install/install-ceph-gateway/
+```
+$ ceph-deploy install --rgw admin node1 node2
+$ ceph-deploy admin <node-name>
+$ ceph-deploy rgw create admin node1 node2
+```
+```
+http://client-node:7480
+```
+```
+<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+<Owner>
+<ID>anonymous</ID>
+<DisplayName/>
+</Owner>
+<Buckets/>
+</ListAllMyBucketsResult>
+```
 **查看集群状态**
 
 ```
 $ ceph -s
 $ ceph health
+```
+```
+  cluster:
+    id:     26c7c77a-56d1-4630-879b-837e15b9bc77
+    health: HEALTH_OK
+ 
+  services:
+    mon: 3 daemons, quorum admin,node1,node2
+    mgr: node2(active), standbys: admin, node1
+    osd: 3 osds: 3 up, 3 in
+    rgw: 3 daemons active
+ 
+  data:
+    pools:   4 pools, 32 pgs
+    objects: 189  objects, 1.5 KiB
+    usage:   3.0 GiB used, 57 GiB / 60 GiB avail
+    pgs:     32 active+clean
+ 
+  io:
+    client:   43 KiB/s rd, 0 B/s wr, 43 op/s rd, 27 op/s wr
 ```
 **开启ceph的Dashboard**
 1. Dashboard的基础设置
@@ -185,6 +224,10 @@ $ ceph mgr services
 ```
 # 禁用SSL
 $ ceph config set mgr mgr/dashboard/ssl false
+```
+```
+# 查看配置
+$ ceph config dump
 ```
 2. 启用对象网关管理前端（Object Gateway）
 文档：https://docs.ceph.com/docs/mimic/mgr/dashboard/#enabling-the-object-gateway-management-frontend
@@ -268,6 +311,7 @@ $ systemctl list-unit-files|grep enabled|grep ceph
 $ systemctl enable ceph-mon@node1.service
 ```
 **启动、停止、重启、查看OSD所有和单个进程**
+
 ```
 # 登陆到OSD 节点，对服务器上的所有OSD操作
 # sudo systemctl [start/stop/restart/status] ceph-osd@* or eph-osd@osd_id.service
@@ -339,6 +383,7 @@ use_https = False
 $ s3cmd ls
 # 创建bucket
 $ s3cmd mb s3://{$BUCKETNAME}
+$ s3cmd mb s3://abc
 # 删除空bucket
 $ s3cmd rb s3://{$BUCKETNAME}
 # 上传某个文件到bucket
