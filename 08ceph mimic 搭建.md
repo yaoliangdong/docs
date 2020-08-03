@@ -41,7 +41,7 @@ $ timedatectl set-ntp yes
 ```
 5. 配置所有节点/etc/hosts
 ```
-$ vim /et/hosts
+$ vim /etc/hosts
 ```
 ```
 192.168.1.170 admin
@@ -50,6 +50,14 @@ $ vim /et/hosts
 192.168.1.174 node3
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+```
+```
+# 设置本机hostname（各自节点执行）
+$ sysctl kernel.hostname=admin
+$ vim /etc/hostname
+```
+```
+admin
 ```
 6. 配置部署节点到所有节点的无秘钥访问
 ```
@@ -150,6 +158,7 @@ $ ceph-deploy osd create --data /dev/sdb node1
 
 ```
 $ ceph -s
+$ ceph health
 ```
 **开启ceph的Dashboard**
 1. Dashboard的基础设置
@@ -243,6 +252,30 @@ $ ceph dashboard set-rgw-api-user-id <user_id>
 $ ceph dashboard set-rgw-api-ssl-verify False
 # 网关的超时设置，默认值为45秒
 $ ceph dashboard set-rest-requests-timeout <seconds>
+```
+**启动、停止、重启、查看MON进程**
+https://blog.csdn.net/don_chiang709/article/details/93620825
+
+```
+# 登陆到monitor节点，执行如下命令
+# sudo systemctl [start/stop/restart/status] ceph-mon@mon‘sid.service，例如：我的monitor id为node1
+$ systemctl status ceph-mon@node1.service
+# 查看mon节点上所有启动的ceph服务，命令：systemctl list-units --type=service|grep ceph
+$ systemctl list-units --type=service|grep ceph
+# 查看节点上所有自动启动的ceph服务，命令：systemctl list-unit-files|grep enabled|grep ceph
+$ systemctl list-unit-files|grep enabled|grep ceph
+# 设置ceph-mon随Linux 系统自动启动
+$ systemctl enable ceph-mon@node1.service
+```
+**启动、停止、重启、查看OSD所有和单个进程**
+```
+# 登陆到OSD 节点，对服务器上的所有OSD操作
+# sudo systemctl [start/stop/restart/status] ceph-osd@* or eph-osd@osd_id.service
+# 如上把@* 替换为OSD的ID 如@0，即可执行对应ID的 OSD操作。这里的osd id的值 是0，不是hostname了，例如：
+sudo systemctl [start/stop/restart/status] ceph-osd@0.service
+# 设置ceph-osd随Linux 系统自动启动
+$ systemctl enable ceph-osd@0.service
+
 ```
 
 结束
