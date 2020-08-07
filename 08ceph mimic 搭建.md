@@ -1,6 +1,13 @@
 # ceph mimic`13.2.10` 版本搭建
 ## 系统环境 `CentOS 7`
 
+**集群结构**
+主机名 | IP | 服务
+- | - | -
+admin | 192.168.1.170 | mon mgr rgw osd 
+node1 | 192.168.1.172 | mon mgr rgw osd
+node2 | 192.168.1.173 | mon mgr rgw osd1 osd2
+
 **基础环境配置：**
 
 1. 查看系统版本（Linux查看操作系统版本的几种方式）
