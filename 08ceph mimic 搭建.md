@@ -129,7 +129,7 @@ $ vim ceph.conf
 public network = 192.168.1.0/24
 cluster network = 192.168.1.0/24
 ```
-7. 杀进程（所有节点都要执行）
+7. 查看ceph进程
 ```
 $ netstat  -anp  |grep 6789 
 ```
@@ -342,6 +342,7 @@ $ ceph -w
 $ systemctl stop ceph-osd@{osd-num}
 ```
 **osd full 查看**
+
 ```
 # 查询发现 ID 0 1 2磁盘使用超过95%，ID 4是新加的osd盘
 $ ceph osd df
