@@ -67,6 +67,13 @@ $ ssh-copy-id root@node1
 $ ssh-copy-id root@node2
 $ ssh-copy-id root@node3
 ```
+**卸载ceph**
+
+```
+# 在任何时候遇到麻烦并且想要重新开始，请执行以下操作清除配置。如果执行purge，则必须重新安装Ceph
+$ ceph-deploy purge <gateway-node1> [<gateway-node2>]
+$ ceph-deploy purgedata <gateway-node1> [<gateway-node2>]
+```
 **安装ceph[所有节点]**
 1. 配置ceph的yum源
 ```
@@ -282,9 +289,11 @@ $ radosgw-admin user info --uid=<user_id>
 # 向仪表板模块提供凭据（access_key和secret_key通过用户详情中获取）
 $ ceph dashboard set-rgw-api-access-key <access_key>
 $ ceph dashboard set-rgw-api-secret-key <secret_key>
-# 设置主机和端口
+# 设置主机和端口（192.168.1.170:7480 rgw网关服务）
 $ ceph dashboard set-rgw-api-host <host>
+$ ceph dashboard set-rgw-api-host 192.168.1.170
 $ ceph dashboard set-rgw-api-port <port>
+$ ceph dashboard set-rgw-api-port 7480
 # http or https
 $ ceph dashboard set-rgw-api-scheme <scheme>
 
@@ -320,10 +329,83 @@ sudo systemctl [start/stop/restart/status] ceph-osd@0.service
 # 设置ceph-osd随Linux 系统自动启动
 $ systemctl enable ceph-osd@0.service
 ```
+**添加、卸载osd磁盘**
+https://docs.ceph.com/docs/mimic/rados/operations/add-or-rm-osds/
 ```
-# 在任何时候遇到麻烦并且想要重新开始，请执行以下操作清除配置。如果执行purge，则必须重新安装Ceph
-$ ceph-deploy purge <gateway-node1> [<gateway-node2>]
-$ ceph-deploy purgedata <gateway-node1> [<gateway-node2>]
+# 将OSD移出群集
+$ ceph osd out {osd-num}
+# 将OSD加入群集
+$ ceph osd in {osd-num}
+# 观察数据迁移。也可通过dashboard web端控制台监控osd的数据均衡情况：当给node节点新添加1块osd，老的osd中的数据会向新osd中均衡。当卸载node节点的osd，被卸载osd的数据会向另一块osd中均衡，需要注意的是卸载osd时需要保证被卸载osd中的数据能够在另一块osd中存储的下，否则集群会宕机，Overall status:HEALTH_ERRO
+$ ceph -w
+# 从群集中取出OSD后，它可能仍在运行。即，OSD可以是up和out。从配置中删除OSD之前，必须先停止它
+$ systemctl stop ceph-osd@{osd-num}
+```
+**osd full 查看**
+```
+# 查询发现 ID 0 1 2磁盘使用超过95%，ID 4是新加的osd盘
+$ ceph osd df
+```
+```
+ID CLASS WEIGHT  REWEIGHT SIZE    USE     DATA    OMAP META  AVAIL   %USE  VAR  PGS 
+ 2   hdd 0.01949  1.00000  20 GiB  19 GiB  18 GiB  0 B 1 GiB 897 MiB 95.62 2.62  56 
+ 0   hdd 0.01949  1.00000  20 GiB  19 GiB  18 GiB  0 B 1 GiB 897 MiB 95.62 2.62  56 
+ 1   hdd 0.01949  1.00000  20 GiB  19 GiB  18 GiB  0 B 1 GiB 897 MiB 95.62 2.62  10 
+ 3   hdd 0.09769  1.00000 100 GiB 1.0 GiB 8.8 MiB  0 B 1 GiB  99 GiB  1.01 0.03  31 
+                    TOTAL 160 GiB  58 GiB  54 GiB  0 B 4 GiB 102 GiB 36.48          
+MIN/MAX VAR: 0.03/2.62  STDDEV: 54.20
+```
+```
+$ ceph health
+```
+```
+HEALTH_ERR 3 full osd(s); 7 pool(s) full; Degraded data redundancy: 4443/15465 objects degraded (28.729%), 25 pgs degraded, 15 pgs undersized; Degraded data redundancy (low space): 32 pgs recovery_toofull; mon admin is low on available space
+```
+```
+$ ceph -s
+```
+```
+  cluster:
+    id:     26c7c77a-56d1-4630-879b-837e15b9bc77
+    health: HEALTH_ERR
+            3 full osd(s)
+            7 pool(s) full
+            Degraded data redundancy: 4443/15465 objects degraded (28.729%), 25 pgs degraded, 15 pgs undersized
+            Degraded data redundancy (low space): 32 pgs recovery_toofull
+            mon admin is low on available space
+ 
+  services:
+    mon: 3 daemons, quorum admin,node1,node2
+    mgr: admin(active), standbys: node2, node1
+    osd: 4 osds: 4 up, 4 in; 15 remapped pgs
+    rgw: 3 daemons active
+ 
+  data:
+    pools:   7 pools, 56 pgs
+    objects: 5.16 k objects, 18 GiB
+    usage:   58 GiB used, 102 GiB / 160 GiB avail
+    pgs:     4443/15465 objects degraded (28.729%)
+             24 active+clean
+             15 active+recovery_toofull+undersized+degraded+remapped
+             10 active+recovery_toofull+degraded
+             7  active+recovery_toofull
+```
+```
+$ ceph health detail
+```
+```
+$ ceph osd tree
+```
+```
+ID CLASS WEIGHT  TYPE NAME      STATUS REWEIGHT PRI-AFF 
+-1       2.05846 root default                           
+-7       0.01949     host admin                         
+ 2   hdd 0.01949         osd.2      up  1.00000 1.00000 
+-3       0.01949     host node1                         
+ 0   hdd 0.01949         osd.0      up  1.00000 1.00000 
+-5       2.01949     host node2                         
+ 1   hdd 0.01949         osd.1      up  1.00000 1.00000 
+ 3   hdd 2.00000         osd.3      up  1.00000 1.00000
 ```
 
 结束
@@ -391,7 +473,7 @@ $ s3cmd mb s3://abc
 # 删除空bucket
 $ s3cmd rb s3://{$BUCKETNAME}
 # 上传某个文件到bucket
-$ s3cmd put {$FILENAME}t s3://{$BUCKETNAME}
+$ s3cmd put {$FILENAME} s3://{$BUCKETNAME}
 # 列举bucket中的内容
 $ s3cmd ls s3://{$BUCKETNAME}
 # 下载文件
@@ -417,6 +499,16 @@ $ lsblk
 ```
 # 创建文件名为test1大小为1000M的文件
 $ dd if=/dev/zero of=test1 bs=1M count=1000
+```
+6. 修改基础镜像仓库为阿里库
+```
+$ cd /etc/yum.repos.d
+$ mv CentOS-Base.repo CentOS-Base.repo.bak
+# 配置为阿里镜像源
+$ wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+# 设置缓存
+$ yum makecache
+
 ```
 
 
