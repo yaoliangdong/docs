@@ -27,6 +27,13 @@ SHOW GLOBAL STATUS like 'Innodb_page_size';--查询默认页大小 默认值16k
  SHOW VARIABLES LIKE 'innodb_adaptive_hash_index_parts';
  
  optimize table test; -- 优化页分裂 碎片等问题，重量级操作
+ 
+-- 默认pool的大小是128M，可以通过命令查看。
+show variables like 'innodb_buffer_pool%';
+-- 查看已经被占用的和空闲的。
+show global status like '%innodb_buffer_pool_pages%'; 
+
+show global status like '%innodb_old_blocks_pct%'; 
 ```
 慢查询
 ```
