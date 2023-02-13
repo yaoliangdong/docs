@@ -34,6 +34,9 @@ show variables like 'innodb_buffer_pool%';
 show global status like '%innodb_buffer_pool_pages%'; 
 
 show global status like '%innodb_old_blocks_pct%'; 
+
+show VARIABLES like 'innodb_flush_method'; -- 查看数据和日志冲洗方式
+
 ```
 慢查询
 ```
